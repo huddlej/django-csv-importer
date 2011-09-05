@@ -20,7 +20,7 @@ class CSVForm(forms.ModelForm):
         else:
             content_types = content_types.exclude(app_label__iexact=t)
     content_type = forms.ModelChoiceField(queryset=content_types)
-    
+
 key_to_field_map = getattr(settings, 'CSVIMPORTER_KEY_TO_FIELD_MAP', lambda k: k.replace(' ','_').lower())
 class CSVAssociateForm(forms.Form):
     def __init__(self, instance, *args, **kwargs):
@@ -39,7 +39,7 @@ class CSVAssociateForm(forms.Form):
             if key_to_field_map(field_name) in [f.name for f in self.klass._meta.fields]:
                 self.base_fields[field_name].initial = key_to_field_map(field_name)
         super(CSVAssociateForm, self).__init__(*args, **kwargs)
-        
+
     def save(self, request):
         # these are out here because we only need to retreive them from settings the once.
         transforms = getattr(settings, 'CSVIMPORTER_DATA_TRANSFORMS', {})
