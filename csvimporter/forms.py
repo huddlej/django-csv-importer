@@ -3,6 +3,7 @@ import csv, re
 from django import forms
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.base import ContentFile
+from django.core.urlresolvers import get_callable
 from django.conf import settings
 
 from csvimporter.models import CSV
@@ -42,6 +43,13 @@ class CSVAssociateForm(forms.Form):
     def save(self, request):
         # these are out here because we only need to retreive them from settings the once.
         transforms = getattr(settings, 'CSVIMPORTER_DATA_TRANSFORMS', {})
+
+        # Load callables for any transforms defined as paths to python
+        # functions.
+        for key, transform in transforms.items():
+            if isinstance(transform, basestring):
+                transforms[key] = get_callable(transform)
+
         for row in self.reader:
             data = {}
             for field_name in self.reader.fieldnames:
