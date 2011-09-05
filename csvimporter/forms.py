@@ -43,19 +43,19 @@ class CSVAssociateForm(forms.Form):
     def save(self, request):
         # these are out here because we only need to retreive them from settings the once.
         transforms = getattr(settings, 'CSVIMPORTER_DATA_TRANSFORMS', {})
+        transform_key = '%s.%s' % (self.instance.content_type.app_label, self.instance.content_type.model)
+        transform = transforms.get(transform_key, lambda r, d: d)
 
-        # Load callables for any transforms defined as paths to python
-        # functions.
-        for key, transform in transforms.items():
-            if isinstance(transform, basestring):
-                transforms[key] = get_callable(transform)
+        # Load callable for any transform defined as a path to a python
+        # function.
+        if isinstance(transform, basestring):
+            transform = get_callable(transform)
 
         for row in self.reader:
             data = {}
             for field_name in self.reader.fieldnames:
                 data[self.cleaned_data[field_name]] = row[field_name]
-            transform_key = '%s.%s' % (self.instance.content_type.app_label, self.instance.content_type.model)
-            data = transforms.get(transform_key, lambda r, d: d)(request, data)
+            data = transform(request, data)
             new_obj = self.klass()
             for key in data.keys():
                 setattr(new_obj, key, data[key])
